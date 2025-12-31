@@ -1,0 +1,7 @@
+{
+  "name": "Copy of VISIT ROMA 20251231 1214",
+  "description": "Tu asistente personal para la escala en Roma el 10 de Mayo de 2026. Itinerario, mapa y control de gastos.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
