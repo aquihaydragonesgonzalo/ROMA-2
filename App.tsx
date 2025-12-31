@@ -41,7 +41,8 @@ const App: React.FC = () => {
     if ('geolocation' in navigator) {
       const wId = navigator.geolocation.watchPosition(
         (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        null, { enableHighAccuracy: true }
+        (err) => console.warn("Error Geolocation:", err),
+        { enableHighAccuracy: true }
       );
       return () => navigator.geolocation.clearWatch(wId);
     }
@@ -50,20 +51,19 @@ const App: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      const [arrH, arrM] = SHIP_ARRIVAL_TIME.split(':').map(Number);
-      const arrival = new Date(); 
-      arrival.setHours(arrH, arrM, 0);
+      
+      // Fecha y hora del evento
+      const arrivalDate = new Date(`${DATE_OF_VISIT}T${SHIP_ARRIVAL_TIME}`);
+      const onboardDate = new Date(`${DATE_OF_VISIT}T${SHIP_ONBOARD_TIME}`);
 
-      if (now < arrival) {
+      if (now < arrivalDate) {
         setCountdown("🚢 EN NAVEGACIÓN");
         setHasArrived(false);
         return;
       }
 
       setHasArrived(true);
-      const [onH, onM] = SHIP_ONBOARD_TIME.split(':').map(Number);
-      const target = new Date(); target.setHours(onH, onM, 0);
-      const diff = target.getTime() - now.getTime();
+      const diff = onboardDate.getTime() - now.getTime();
 
       if (diff <= 0) {
         setCountdown("¡A BORDO!");
@@ -88,7 +88,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-3xl font-mono font-bold tabular-nums ${hasArrived ? 'text-white' : 'text-roma-300 italic'}`}>{countdown}</div>
+          <div className={`text-2xl font-mono font-bold tabular-nums ${hasArrived ? 'text-white' : 'text-roma-300 italic'}`}>{countdown}</div>
         </div>
       </header>
 
@@ -98,7 +98,10 @@ const App: React.FC = () => {
             <Timeline 
               itinerary={itinerary} 
               onToggleComplete={handleToggleComplete}
-              onLocate={(c) => { setMapFocus(c); setActiveTab(AppTab.MAP); }}
+              onLocate={(c, end) => { 
+                setMapFocus(c); 
+                setActiveTab(AppTab.MAP); 
+              }}
               userLocation={userLocation}
             />
           </div>
@@ -120,7 +123,10 @@ const App: React.FC = () => {
           ].map(tab => (
             <button 
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setMapFocus(null);
+                setActiveTab(tab.id);
+              }}
               className={`flex flex-col items-center w-full h-full justify-center transition-all ${activeTab === tab.id ? 'text-roma-700 font-bold scale-110' : 'text-stone-300'}`}
             >
               <tab.icon size={22} />

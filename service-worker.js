@@ -1,10 +1,20 @@
-const CACHE_NAME = 'flam-guide-v1';
+const CACHE_NAME = 'roma-travel-v2';
 const URLS_TO_CACHE = [
+  './',
   './index.html',
+  './index.tsx',
+  './App.tsx',
+  './types.ts',
+  './constants.ts',
+  './manifest.json',
+  './components/Timeline.tsx',
+  './components/Map.tsx',
+  './components/Budget.tsx',
+  './components/Guide.tsx',
+  './services/utils.ts',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js',
   'https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap'
 ];
 
@@ -17,15 +27,34 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request).then((networkResponse) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          // Cache dynamic requests (like esm.sh scripts) for offline use next time
-          if(event.request.method === 'GET' && networkResponse.status === 200) {
-              cache.put(event.request, networkResponse.clone());
-          }
+      if (response) return response;
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
+        }
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          if (event.request.method === 'GET') {
+            cache.put(event.request, responseToCache);
+          }
         });
+        return networkResponse;
       });
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
     })
   );
 });
